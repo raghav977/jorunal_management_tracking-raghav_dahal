@@ -1,0 +1,84 @@
+@page "/journal/{Id:int}"
+@using MauiApp3.Models
+@using MauiApp3.Services
+@inject IJournalService JournalService
+@inject NavigationManager Nav
+
+<div class="detail-page">
+    @if (entry == null)
+    {
+        <div class="loading">Loading...</div>
+    }
+    else
+    {
+        <div class="detail-header">
+            <button class="back-btn" @onclick="GoBack">← Back</button>
+            <div class="detail-actions">
+                <button class="action-btn secondary" @onclick="EditEntry">✏️ Edit</button>
+                <button class="action-btn danger" @onclick="DeleteEntry">🗑️ Delete</button>
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <div class="detail-mood">
+                <span class="mood-large">@GetMoodEmoji(entry.Mood)</span>
+                <span class="mood-label">@entry.Mood</span>
+            </div>
+
+            <h1 class="detail-title">@entry.Title</h1>
+
+            <div class="detail-meta">
+                <span>📅 @entry.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy")</span>
+                <span>🕐 @entry.CreatedAt.ToLocalTime().ToString("h:mm tt")</span>
+                @if (entry.UpdatedAt != entry.CreatedAt)
+                {
+                    <span>✏️ Edited @entry.UpdatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                }
+            </div>
+
+            <div class="detail-content">
+                @foreach (var paragraph in entry.Content.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    <p>@paragraph</p>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private JournalEntry? entry;
+
+    protected override async Task OnInitializedAsync()
+    {
+        entry = await JournalService.GetEntryByIdAsync(Id);
+        if (entry == null)
+        {
+            Nav.NavigateTo("/journal");
+        }
+    }
+
+    private void GoBack() => Nav.NavigateTo("/journal");
+    private void EditEntry() => Nav.NavigateTo($"/journal/edit/{Id}");
+
+    private async Task DeleteEntry()
+    {
+        await JournalService.DeleteEntryAsync(Id);
+        Nav.NavigateTo("/journal");
+    }
+
+    private string GetMoodEmoji(MoodType mood) => mood switch
+    {
+        MoodType.Happy => "😊",
+        MoodType.Sad => "😢",
+        MoodType.Neutral => "😐",
+        MoodType.Anxious => "😰",
+        MoodType.Excited => "🤩",
+        MoodType.Grateful => "🙏",
+        MoodType.Stressed => "😫",
+        _ => "😐"
+    };
+}

@@ -1,0 +1,88 @@
+@page "/dashboard"
+@using MauiApp3.Services
+@inject IJournalService JournalService
+@inject NavigationManager Nav
+
+<div class="dashboard">
+    <h1>📔 My Journal</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-number">@totalEntries</span>
+            <span class="stat-label">Total Entries</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">@todayEntries</span>
+            <span class="stat-label">Today</span>
+        </div>
+        <div class="stat-card mood-card">
+            <span class="stat-emoji">@GetMoodEmoji(mostFrequentMood)</span>
+            <span class="stat-label">Top Mood</span>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <button class="action-btn primary" @onclick="NewEntry">
+            ✍️ New Entry
+        </button>
+        <button class="action-btn secondary" @onclick="ViewJournal">
+            📖 View Journal
+        </button>
+    </div>
+
+    @if (recentEntries.Any())
+    {
+        <div class="recent-section">
+            <h2>Recent Entries</h2>
+            @foreach (var entry in recentEntries)
+            {
+                <div class="entry-preview" @onclick="() => ViewEntry(entry.Id)">
+                    <span class="entry-mood">@GetMoodEmoji(entry.Mood)</span>
+                    <div class="entry-info">
+                        <strong>@entry.Title</strong>
+                        <span class="entry-date">@entry.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<MauiApp3.Models.JournalEntry> recentEntries = new();
+    private int totalEntries;
+    private int todayEntries;
+    private MauiApp3.Models.MoodType mostFrequentMood = MauiApp3.Models.MoodType.Neutral;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allEntries = await JournalService.GetAllEntriesAsync();
+        totalEntries = allEntries.Count;
+        todayEntries = allEntries.Count(e => e.CreatedAt.Date == DateTime.UtcNow.Date);
+        recentEntries = allEntries.Take(3).ToList();
+
+        if (allEntries.Any())
+        {
+            mostFrequentMood = allEntries
+                .GroupBy(e => e.Mood)
+                .OrderByDescending(g => g.Count())
+                .First().Key;
+        }
+    }
+
+    private void NewEntry() => Nav.NavigateTo("/journal/new");
+    private void ViewJournal() => Nav.NavigateTo("/journal");
+    private void ViewEntry(int id) => Nav.NavigateTo($"/journal/{id}");
+
+    private string GetMoodEmoji(MauiApp3.Models.MoodType mood) => mood switch
+    {
+        MauiApp3.Models.MoodType.Happy => "😊",
+        MauiApp3.Models.MoodType.Sad => "😢",
+        MauiApp3.Models.MoodType.Neutral => "😐",
+        MauiApp3.Models.MoodType.Anxious => "😰",
+        MauiApp3.Models.MoodType.Excited => "🤩",
+        MauiApp3.Models.MoodType.Grateful => "🙏",
+        MauiApp3.Models.MoodType.Stressed => "😫",
+        _ => "😐"
+    };
+}

@@ -1,0 +1,109 @@
+@page "/journal"
+@using MauiApp3.Models
+@using MauiApp3.Services
+@inject IJournalService JournalService
+@inject NavigationManager Nav
+
+<div class="journal-page">
+    <div class="journal-header">
+        <h1>📖 Journal</h1>
+        <button class="action-btn primary" @onclick="NewEntry">+ New Entry</button>
+    </div>
+
+    <div class="filter-bar">
+        <select class="mood-filter" @onchange="OnMoodFilterChanged">
+            <option value="">All Moods</option>
+            @foreach (var mood in Enum.GetValues<MoodType>())
+            {
+                <option value="@mood">@GetMoodEmoji(mood) @mood</option>
+            }
+        </select>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading">Loading entries...</div>
+    }
+    else if (!entries.Any())
+    {
+        <div class="empty-state">
+            <span class="empty-icon">📝</span>
+            <p>No journal entries yet.</p>
+            <button class="action-btn primary" @onclick="NewEntry">Create your first entry</button>
+        </div>
+    }
+    else
+    {
+        <div class="entries-list">
+            @foreach (var entry in entries)
+            {
+                <div class="entry-card" @onclick="() => ViewEntry(entry.Id)">
+                    <div class="entry-mood-badge">@GetMoodEmoji(entry.Mood)</div>
+                    <div class="entry-content">
+                        <h3>@entry.Title</h3>
+                        <p class="entry-preview">@TruncateContent(entry.Content)</p>
+                        <span class="entry-date">@entry.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy • h:mm tt")</span>
+                    </div>
+                    <div class="entry-actions">
+                        <button class="icon-btn" @onclick:stopPropagation @onclick="() => EditEntry(entry.Id)" title="Edit">✏️</button>
+                        <button class="icon-btn danger" @onclick:stopPropagation @onclick="() => DeleteEntry(entry.Id)" title="Delete">🗑️</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<JournalEntry> entries = new();
+    private bool isLoading = true;
+    private MoodType? selectedMood;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntries();
+    }
+
+    private async Task LoadEntries()
+    {
+        isLoading = true;
+        entries = selectedMood.HasValue
+            ? await JournalService.GetEntriesByMoodAsync(selectedMood.Value)
+            : await JournalService.GetAllEntriesAsync();
+        isLoading = false;
+    }
+
+    private async Task OnMoodFilterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        selectedMood = string.IsNullOrEmpty(value) ? null : Enum.Parse<MoodType>(value);
+        await LoadEntries();
+    }
+
+    private void NewEntry() => Nav.NavigateTo("/journal/new");
+    private void ViewEntry(int id) => Nav.NavigateTo($"/journal/{id}");
+    private void EditEntry(int id) => Nav.NavigateTo($"/journal/edit/{id}");
+
+    private async Task DeleteEntry(int id)
+    {
+        await JournalService.DeleteEntryAsync(id);
+        await LoadEntries();
+    }
+
+    private string TruncateContent(string content)
+    {
+        return content.Length > 100 ? content[..100] + "..." : content;
+    }
+
+    private string GetMoodEmoji(MoodType mood) => mood switch
+    {
+        MoodType.Happy => "😊",
+        MoodType.Sad => "😢",
+        MoodType.Neutral => "😐",
+        MoodType.Anxious => "😰",
+        MoodType.Excited => "🤩",
+        MoodType.Grateful => "🙏",
+        MoodType.Stressed => "😫",
+        _ => "😐"
+    };
+}

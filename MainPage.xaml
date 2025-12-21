@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:MauiApp3"
+             xmlns:components="clr-namespace:MauiApp3.Components"
+             xmlns:pages="clr-namespace:MauiApp3.Components.Pages"
+             x:Class="MauiApp3.MainPage">
+
+    <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
+        <BlazorWebView.RootComponents>
+            <!-- Mount the Main razor component (Components/Pages/Main.razor) as the startup component -->
+            <RootComponent Selector="#app" ComponentType="{x:Type pages:Main}" />
+        </BlazorWebView.RootComponents>
+    </BlazorWebView>
+
+</ContentPage>

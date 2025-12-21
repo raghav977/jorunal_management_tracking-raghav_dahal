@@ -1,0 +1,114 @@
+@page "/journal/new"
+@page "/journal/edit/{Id:int}"
+@using MauiApp3.Models
+@using MauiApp3.Services
+@inject IJournalService JournalService
+@inject NavigationManager Nav
+
+<div class="entry-form-page">
+    <h1>@(isEditMode ? "✏️ Edit Entry" : "✍️ New Entry")</h1>
+
+    <EditForm Model="entry" OnValidSubmit="SaveEntry">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="title">Title</label>
+            <InputText id="title" class="form-control" @bind-Value="entry.Title" placeholder="What's on your mind?" />
+            <ValidationMessage For="@(() => entry.Title)" />
+        </div>
+
+        <div class="form-group">
+            <label>How are you feeling?</label>
+            <div class="mood-selector">
+                @foreach (var mood in Enum.GetValues<MoodType>())
+                {
+                    <button type="button" 
+                            class="mood-btn @(entry.Mood == mood ? "selected" : "")" 
+                            @onclick="() => SelectMood(mood)">
+                        <span class="mood-emoji">@GetMoodEmoji(mood)</span>
+                        <span class="mood-name">@mood</span>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="content">Your thoughts</label>
+            <InputTextArea id="content" class="form-control content-area" @bind-Value="entry.Content" 
+                           placeholder="Write about your day, feelings, or anything you'd like to remember..." rows="8" />
+            <ValidationMessage For="@(() => entry.Content)" />
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="action-btn secondary" @onclick="Cancel">Cancel</button>
+            <button type="submit" class="action-btn primary" disabled="@isSaving">
+                @(isSaving ? "Saving..." : "Save Entry")
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private JournalEntry entry = new();
+    private bool isEditMode => Id.HasValue;
+    private bool isSaving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (isEditMode)
+        {
+            var existingEntry = await JournalService.GetEntryByIdAsync(Id!.Value);
+            if (existingEntry != null)
+            {
+                entry = existingEntry;
+            }
+            else
+            {
+                Nav.NavigateTo("/journal");
+            }
+        }
+    }
+
+    private void SelectMood(MoodType mood)
+    {
+        entry.Mood = mood;
+    }
+
+    private async Task SaveEntry()
+    {
+        if (string.IsNullOrWhiteSpace(entry.Title))
+        {
+            entry.Title = "Untitled Entry";
+        }
+
+        isSaving = true;
+
+        if (isEditMode)
+        {
+            await JournalService.UpdateEntryAsync(entry);
+        }
+        else
+        {
+            await JournalService.CreateEntryAsync(entry);
+        }
+
+        Nav.NavigateTo("/journal");
+    }
+
+    private void Cancel() => Nav.NavigateTo("/journal");
+
+    private string GetMoodEmoji(MoodType mood) => mood switch
+    {
+        MoodType.Happy => "😊",
+        MoodType.Sad => "😢",
+        MoodType.Neutral => "😐",
+        MoodType.Anxious => "😰",
+        MoodType.Excited => "🤩",
+        MoodType.Grateful => "🙏",
+        MoodType.Stressed => "😫",
+        _ => "😐"
+    };
+}

@@ -1,0 +1,63 @@
+@page "/lock"
+@using MauiApp3.Services
+@inject Services.AuthService AuthService
+@inject NavigationManager Nav
+
+<div class="lock-page">
+    <h3>🔒 App Locked</h3>
+
+    @if (!isPasswordSet)
+    {
+        <p>Set your app password:</p>
+        <input type="password" class="form-control" @bind="password" placeholder="New password" />
+        <button class="action-btn primary" @onclick="SetPassword">Set Password</button>
+    }
+    else
+    {
+        <p>Enter your password to unlock:</p>
+        <input type="password" class="form-control" @bind="password" placeholder="Password" />
+        <button class="action-btn primary" @onclick="Unlock">Unlock</button>
+    }
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <p class="error-message">@error</p>
+    }
+</div>
+
+@code {
+    string password = "";
+    string error = "";
+    bool isPasswordSet;
+
+    protected override void OnInitialized()
+    {
+        isPasswordSet = AuthService.IsPasswordSet(); // Fixed: removed negation
+    }
+
+    void SetPassword()
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            error = "Password cannot be empty!";
+            return;
+        }
+
+        AuthService.SetPassword(password);
+        isPasswordSet = true;
+        password = "";
+        error = "";
+    }
+
+    void Unlock()
+    {
+        if (AuthService.VerifyPassword(password))
+        {
+            Nav.NavigateTo("/dashboard"); // Navigate to main page
+        }
+        else
+        {
+            error = "Wrong password!";
+        }
+    }
+}
