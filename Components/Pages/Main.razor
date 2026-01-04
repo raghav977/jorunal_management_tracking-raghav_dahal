@@ -1,6 +1,4 @@
 @using MauiApp3.Services
-@inject AuthService Auth
-@inject NavigationManager Nav
 
 <Router AppAssembly="@typeof(Main).Assembly">
     <Found Context="routeData">
@@ -12,22 +10,3 @@
         </LayoutView>
     </NotFound>
 </Router>
-
-@code {
-    // Prevent calling NavigateTo during render - perform navigation after render instead.
-    private bool _navigated;
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        // Use existing AuthService method. If a password is set we treat the app as locked.
-        if (!_navigated && Auth?.IsPasswordSet() == true)
-        {
-            var relative = Nav.ToBaseRelativePath(Nav.Uri ?? string.Empty);
-            if (!relative.StartsWith("lock", System.StringComparison.OrdinalIgnoreCase))
-            {
-                _navigated = true;
-                Nav.NavigateTo("/lock", true);
-            }
-        }
-    }
-}

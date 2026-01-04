@@ -456,3 +456,15 @@
 /Users/raghavdahal/Documents/dotnet/MauiApp3/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/zh-Hans/Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 /Users/raghavdahal/Documents/dotnet/MauiApp3/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/zh-Hant/Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 /Users/raghavdahal/Documents/dotnet/MauiApp3/bin/Debug/net10.0-maccatalyst/maccatalyst-arm64/libe_sqlite3.dylib
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/MauiApp3.sourcelink.json
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.Data.Sqlite.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.EntityFrameworkCore.Abstractions.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.EntityFrameworkCore.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.EntityFrameworkCore.Relational.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.EntityFrameworkCore.Sqlite.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.Extensions.Caching.Abstractions.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.Extensions.Caching.Memory.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/Microsoft.Extensions.DependencyModel.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/SQLitePCLRaw.batteries_v2.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/SQLitePCLRaw.core.stamp
+/Users/raghavdahal/Documents/dotnet/MauiApp3/obj/Debug/net10.0-maccatalyst/maccatalyst-arm64/resourcestamps/SQLitePCLRaw.provider.e_sqlite3.stamp

@@ -12,12 +12,12 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName></AssetTraitName>
       <AssetTraitValue></AssetTraitValue>
-      <Fingerprint>zv9szdv0wd</Fingerprint>
-      <Integrity>8ZeJdpZWGoupdJgCAx8zftWSDl68B3D1liN7a5SAdbI=</Integrity>
+      <Fingerprint>3npac9gxn4</Fingerprint>
+      <Integrity>TzBJROWxk4UbjrJJvyh5bd9ZKu8V2zk1bAF+Nnz2u3M=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <FileLength>12346</FileLength>
-      <LastWriteTime>Sat, 20 Dec 2025 07:39:20 GMT</LastWriteTime>
+      <FileLength>21539</FileLength>
+      <LastWriteTime>Sun, 04 Jan 2026 02:38:29 GMT</LastWriteTime>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\app.css'))</OriginalItemSpec>
     </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\index.html'))">
@@ -92,12 +92,12 @@
       <RelatedAsset></RelatedAsset>
       <AssetTraitName>ScopedCss</AssetTraitName>
       <AssetTraitValue>ApplicationBundle</AssetTraitValue>
-      <Fingerprint>lpt5bydnyq</Fingerprint>
-      <Integrity>qWgNLpnpDp1luvxg/RUNcFxI4jUiepBh9gXgTbM5nIM=</Integrity>
+      <Fingerprint>hgdlqo97wf</Fingerprint>
+      <Integrity>YUFgmgwWoysl1+h5t84JEb9yfpUQ41ww+V/xMDAT0Mc=</Integrity>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <FileLength>5255</FileLength>
-      <LastWriteTime>Fri, 19 Dec 2025 06:10:59 GMT</LastWriteTime>
+      <FileLength>5220</FileLength>
+      <LastWriteTime>Sun, 04 Jan 2026 02:40:19 GMT</LastWriteTime>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\MauiApp3.styles.css'))</OriginalItemSpec>
     </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\_framework\blazor.modules.json'))">

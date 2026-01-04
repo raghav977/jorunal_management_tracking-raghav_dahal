@@ -1,0 +1,159 @@
+@page "/calendar"
+@using MauiApp3.Models
+@using MauiApp3.Services
+@inject IJournalService JournalService
+@inject NavigationManager Nav
+
+<div class="calendar-page">
+    <div class="calendar-header">
+        <h1>Calendar</h1>
+        <div class="month-nav">
+            <button class="btn-secondary btn-sm" @onclick="PreviousMonth">← Prev</button>
+            <span class="current-month">@currentDate.ToString("MMMM yyyy")</span>
+            <button class="btn-secondary btn-sm" @onclick="NextMonth">Next →</button>
+        </div>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="calendar-weekdays">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+        </div>
+        
+        <div class="calendar-days">
+            @foreach (var day in calendarDays)
+            {
+                <div class="calendar-day @(day.IsCurrentMonth ? "" : "other-month") @(day.IsToday ? "today" : "") @(day.HasEntry ? "has-entry" : "")"
+                     @onclick="() => OnDayClick(day)">
+                    <span class="day-number">@day.Date.Day</span>
+                    @if (day.HasEntry)
+                    {
+                        <span class="day-indicator">@day.MoodEmoji</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (selectedEntry != null)
+    {
+        <div class="selected-entry-preview">
+            <h3>@selectedEntry.Title</h3>
+            <p>@selectedEntry.EntryDate.ToString("MMMM dd, yyyy") - @GetMoodEmoji(selectedEntry.Mood) @selectedEntry.Mood</p>
+            <p class="preview-content">@TruncateContent(selectedEntry.Content)</p>
+            <div class="preview-actions">
+                <button class="btn-secondary" @onclick="() => ViewEntry(selectedEntry.Id)">View</button>
+                <button class="btn-secondary" @onclick="() => EditEntry(selectedEntry.Id)">Edit</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private DateTime currentDate = DateTime.Now;
+    private List<CalendarDay> calendarDays = new();
+    private Dictionary<DateOnly, JournalEntry> entriesByDate = new();
+    private JournalEntry? selectedEntry;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMonth();
+    }
+
+    private async Task LoadMonth()
+    {
+        var firstDayOfMonth = new DateOnly(currentDate.Year, currentDate.Month, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        
+        // Load entries for this month
+        var entries = await JournalService.GetEntriesByDateRangeAsync(firstDayOfMonth, lastDayOfMonth);
+        entriesByDate = entries.ToDictionary(e => e.EntryDate);
+
+        // Build calendar grid
+        calendarDays.Clear();
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        
+        // Get the first day to show (might be from previous month)
+        var startDate = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+        
+        // Show 6 weeks
+        for (int i = 0; i < 42; i++)
+        {
+            var date = startDate.AddDays(i);
+            var hasEntry = entriesByDate.ContainsKey(date);
+            var entry = hasEntry ? entriesByDate[date] : null;
+            
+            calendarDays.Add(new CalendarDay
+            {
+                Date = date,
+                IsCurrentMonth = date.Month == currentDate.Month,
+                IsToday = date == today,
+                HasEntry = hasEntry,
+                MoodEmoji = entry != null ? GetMoodEmoji(entry.Mood) : "",
+                EntryId = entry?.Id
+            });
+        }
+    }
+
+    private async Task PreviousMonth()
+    {
+        currentDate = currentDate.AddMonths(-1);
+        selectedEntry = null;
+        await LoadMonth();
+    }
+
+    private async Task NextMonth()
+    {
+        currentDate = currentDate.AddMonths(1);
+        selectedEntry = null;
+        await LoadMonth();
+    }
+
+    private void OnDayClick(CalendarDay day)
+    {
+        if (day.HasEntry && day.EntryId.HasValue)
+        {
+            selectedEntry = entriesByDate[day.Date];
+        }
+        else if (day.IsCurrentMonth)
+        {
+            // Navigate to create new entry for this date
+            Nav.NavigateTo($"/journal/new?date={day.Date:yyyy-MM-dd}");
+        }
+    }
+
+    private void ViewEntry(int id) => Nav.NavigateTo($"/journal/{id}");
+    private void EditEntry(int id) => Nav.NavigateTo($"/journal/edit/{id}");
+
+    private string TruncateContent(string content)
+    {
+        return content.Length > 150 ? content[..150] + "..." : content;
+    }
+
+    private string GetMoodEmoji(MoodType mood) => mood switch
+    {
+        MoodType.Happy => "😊",
+        MoodType.Sad => "😢",
+        MoodType.Neutral => "😐",
+        MoodType.Anxious => "😰",
+        MoodType.Excited => "🤩",
+        MoodType.Grateful => "🙏",
+        MoodType.Stressed => "😫",
+        _ => "😐"
+    };
+
+    private class CalendarDay
+    {
+        public DateOnly Date { get; set; }
+        public bool IsCurrentMonth { get; set; }
+        public bool IsToday { get; set; }
+        public bool HasEntry { get; set; }
+        public string MoodEmoji { get; set; } = "";
+        public int? EntryId { get; set; }
+    }
+}

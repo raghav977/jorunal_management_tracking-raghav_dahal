@@ -40,13 +40,17 @@
 		<data>
 		CGyd+hCoYDV6CoYLjdlmIQg1EfE=
 		</data>
+		<key>Resources/wwwroot/MauiApp3.hgdlqo97wf.bundle.scp.css</key>
+		<data>
+		2lNt5toxzVwNdidQJw+QArk0ONg=
+		</data>
 		<key>Resources/wwwroot/MauiApp3.lpt5bydnyq.bundle.scp.css</key>
 		<data>
 		kN9yr+tT44Ot8YwckThnggmHPmA=
 		</data>
 		<key>Resources/wwwroot/MauiApp3.styles.css</key>
 		<data>
-		kN9yr+tT44Ot8YwckThnggmHPmA=
+		2lNt5toxzVwNdidQJw+QArk0ONg=
 		</data>
 		<key>Resources/wwwroot/_framework/blazor.modules.json</key>
 		<data>
@@ -58,7 +62,7 @@
 		</data>
 		<key>Resources/wwwroot/app.css</key>
 		<data>
-		MZBC69j/n72XYJ4vgwCjb/76JPU=
+		CSuIlw5c3npeCLhH+x9K0TMqMiQ=
 		</data>
 		<key>Resources/wwwroot/index.html</key>
 		<data>
@@ -79,14 +83,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			JAVBmjpTZ7iBbKqPg9+HSLtONyHu7V1Z7yRc3vJOZBw=
+			25V3ozhuxdL9MVC3gILDmhC20DXrhKml5i0x4Y84aTw=
 			</data>
 		</dict>
 		<key>MonoBundle/MauiApp3.pdb</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			+UmcxfMfw3Aaf5G+ylQM6ppyaI8zloVQ6qOvVz6RvaY=
+			ZLPsnnNnm5qH5iAq1QBLySLhztZ7WWTlSI/R27PheYU=
 			</data>
 		</dict>
 		<key>MonoBundle/Microsoft.AspNetCore.Authorization.dll</key>
@@ -1951,6 +1955,13 @@
 			oTCNed2W8gqZp7lcUqnPLwDNqny+KdHYOAjr9LClkz0=
 			</data>
 		</dict>
+		<key>Resources/wwwroot/MauiApp3.hgdlqo97wf.bundle.scp.css</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			YUFgmgwWoysl1+h5t84JEb9yfpUQ41ww+V/xMDAT0Mc=
+			</data>
+		</dict>
 		<key>Resources/wwwroot/MauiApp3.lpt5bydnyq.bundle.scp.css</key>
 		<dict>
 			<key>hash2</key>
@@ -1962,7 +1973,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			qWgNLpnpDp1luvxg/RUNcFxI4jUiepBh9gXgTbM5nIM=
+			YUFgmgwWoysl1+h5t84JEb9yfpUQ41ww+V/xMDAT0Mc=
 			</data>
 		</dict>
 		<key>Resources/wwwroot/_framework/blazor.modules.json</key>
@@ -1983,7 +1994,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			8ZeJdpZWGoupdJgCAx8zftWSDl68B3D1liN7a5SAdbI=
+			TzBJROWxk4UbjrJJvyh5bd9ZKu8V2zk1bAF+Nnz2u3M=
 			</data>
 		</dict>
 		<key>Resources/wwwroot/index.html</key>

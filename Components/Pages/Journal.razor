@@ -2,22 +2,44 @@
 @using MauiApp3.Models
 @using MauiApp3.Services
 @inject IJournalService JournalService
+@inject ITagService TagService
 @inject NavigationManager Nav
 
 <div class="journal-page">
     <div class="journal-header">
-        <h1>📖 Journal</h1>
-        <button class="action-btn primary" @onclick="NewEntry">+ New Entry</button>
+        <h1>Journal</h1>
+        <button class="btn-primary" @onclick="NewEntry">+ New Entry</button>
     </div>
 
     <div class="filter-bar">
-        <select class="mood-filter" @onchange="OnMoodFilterChanged">
+        <input type="text" 
+               class="search-input" 
+               placeholder="Search entries..." 
+               @bind="searchTerm" 
+               @bind:event="oninput"
+               @onkeydown="HandleSearchKeyDown" />
+        <button class="btn-secondary btn-sm" @onclick="Search">Search</button>
+        
+        <select class="filter-select" @onchange="OnMoodFilterChanged">
             <option value="">All Moods</option>
             @foreach (var mood in Enum.GetValues<MoodType>())
             {
                 <option value="@mood">@GetMoodEmoji(mood) @mood</option>
             }
         </select>
+
+        <select class="filter-select" @onchange="OnTagFilterChanged">
+            <option value="">All Tags</option>
+            @foreach (var tag in availableTags)
+            {
+                <option value="@tag.Id">@tag.Name</option>
+            }
+        </select>
+
+        @if (hasFilters)
+        {
+            <button class="btn-secondary btn-sm" @onclick="ClearFilters">Clear</button>
+        }
     </div>
 
     @if (isLoading)
@@ -28,8 +50,11 @@
     {
         <div class="empty-state">
             <span class="empty-icon">📝</span>
-            <p>No journal entries yet.</p>
-            <button class="action-btn primary" @onclick="NewEntry">Create your first entry</button>
+            <p>@(hasFilters ? "No entries match your filters." : "No journal entries yet.")</p>
+            @if (!hasFilters)
+            {
+                <button class="btn-primary" @onclick="NewEntry">Create your first entry</button>
+            }
         </div>
     }
     else
@@ -41,8 +66,19 @@
                     <div class="entry-mood-badge">@GetMoodEmoji(entry.Mood)</div>
                     <div class="entry-content">
                         <h3>@entry.Title</h3>
-                        <p class="entry-preview">@TruncateContent(entry.Content)</p>
-                        <span class="entry-date">@entry.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy • h:mm tt")</span>
+                        <p class="entry-preview-text">@TruncateContent(entry.Content)</p>
+                        <div class="entry-meta">
+                            <span class="entry-date">@entry.EntryDate.ToString("MMM dd, yyyy")</span>
+                            @if (entry.JournalEntryTags?.Any() == true)
+                            {
+                                <span class="entry-tags">
+                                    @foreach (var jt in entry.JournalEntryTags.Take(3))
+                                    {
+                                        <span class="mini-tag">@jt.Tag?.Name</span>
+                                    }
+                                </span>
+                            }
+                        </div>
                     </div>
                     <div class="entry-actions">
                         <button class="icon-btn" @onclick:stopPropagation @onclick="() => EditEntry(entry.Id)" title="Edit">✏️</button>
@@ -51,33 +87,109 @@
                 </div>
             }
         </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <button class="btn-secondary btn-sm" disabled="@(currentPage <= 1)" @onclick="PreviousPage">← Prev</button>
+                <span class="page-info">Page @currentPage of @totalPages</span>
+                <button class="btn-secondary btn-sm" disabled="@(currentPage >= totalPages)" @onclick="NextPage">Next →</button>
+            </div>
+        }
     }
 </div>
 
 @code {
     private List<JournalEntry> entries = new();
+    private List<Tag> availableTags = new();
     private bool isLoading = true;
+    private string searchTerm = "";
     private MoodType? selectedMood;
+    private int? selectedTagId;
+    private int currentPage = 1;
+    private int pageSize = 2;
+    private int totalPages = 1;
+    private int totalCount = 0;
+
+    private bool hasFilters => selectedMood.HasValue || selectedTagId.HasValue || !string.IsNullOrWhiteSpace(searchTerm);
 
     protected override async Task OnInitializedAsync()
     {
+        availableTags = await TagService.GetAllTagsAsync();
         await LoadEntries();
     }
 
     private async Task LoadEntries()
     {
         isLoading = true;
-        entries = selectedMood.HasValue
-            ? await JournalService.GetEntriesByMoodAsync(selectedMood.Value)
-            : await JournalService.GetAllEntriesAsync();
+        var result = await JournalService.GetEntriesPagedAsync(
+            currentPage, 
+            pageSize, 
+            selectedMood, 
+            selectedTagId, 
+            string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm);
+        
+        entries = result.Entries;
+        totalCount = result.TotalCount;
+        totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
         isLoading = false;
+    }
+
+    private async Task HandleSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Search();
+        }
+    }
+
+    private async Task Search()
+    {
+        currentPage = 1;
+        await LoadEntries();
     }
 
     private async Task OnMoodFilterChanged(ChangeEventArgs e)
     {
         var value = e.Value?.ToString();
         selectedMood = string.IsNullOrEmpty(value) ? null : Enum.Parse<MoodType>(value);
+        currentPage = 1;
         await LoadEntries();
+    }
+
+    private async Task OnTagFilterChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        selectedTagId = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+        currentPage = 1;
+        await LoadEntries();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchTerm = "";
+        selectedMood = null;
+        selectedTagId = null;
+        currentPage = 1;
+        await LoadEntries();
+    }
+
+    private async Task PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadEntries();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadEntries();
+        }
     }
 
     private void NewEntry() => Nav.NavigateTo("/journal/new");

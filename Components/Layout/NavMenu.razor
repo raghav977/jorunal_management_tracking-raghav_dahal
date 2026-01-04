@@ -1,6 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿<div class="top-row navbar">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">📔 Journal App</a>
+        <span class="navbar-brand">📔 Journal</span>
     </div>
 </div>
 
@@ -8,21 +8,30 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        <div class="nav-item px-3">
+        <div class="nav-item">
             <NavLink class="nav-link" href="dashboard" Match="NavLinkMatch.All">
-                <span class="nav-icon" aria-hidden="true">🏠</span> Dashboard
+                <span class="nav-icon">🏠</span> Dashboard
             </NavLink>
         </div>
-        <div class="nav-item px-3">
+        <div class="nav-item">
             <NavLink class="nav-link" href="journal">
-                <span class="nav-icon" aria-hidden="true">📖</span> Journal
+                <span class="nav-icon">📖</span> Journal
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="lock">
-                <span class="nav-icon" aria-hidden="true">🔒</span> Lock App
+        <div class="nav-item">
+            <NavLink class="nav-link" href="calendar">
+                <span class="nav-icon">📅</span> Calendar
+            </NavLink>
+        </div>
+        <div class="nav-item">
+            <NavLink class="nav-link" href="export">
+                <span class="nav-icon">📤</span> Export
+            </NavLink>
+        </div>
+        <div class="nav-item">
+            <NavLink class="nav-link" href="settings">
+                <span class="nav-icon">⚙️</span> Settings
             </NavLink>
         </div>
     </nav>
 </div>
-

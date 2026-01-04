@@ -1,63 +1,122 @@
-@page "/lock"
+@page "/"
 @using MauiApp3.Services
-@inject Services.AuthService AuthService
+@inject AuthService AuthService
+@inject AppState AppState
 @inject NavigationManager Nav
+@layout EmptyLayout
 
-<div class="lock-page">
-    <h3>🔒 App Locked</h3>
+<div class="lock-container">
+    <div class="lock-card">
+        <div class="lock-icon">🔒</div>
+        <h1>Journal</h1>
+        
+        @if (!isPasswordSet)
+        {
+            <p class="lock-subtitle">Create a password to secure your journal</p>
+            <div class="input-group">
+                <input type="password" 
+                       class="lock-input" 
+                       @bind="password" 
+                       @bind:event="oninput"
+                       placeholder="New password" />
+            </div>
+            <div class="input-group">
+                <input type="password" 
+                       class="lock-input" 
+                       @bind="confirmPassword" 
+                       @bind:event="oninput"
+                       placeholder="Confirm password" />
+            </div>
+            <button class="lock-btn" @onclick="SetPassword" disabled="@string.IsNullOrEmpty(password)">
+                Set Password
+            </button>
+        }
+        else
+        {
+            <p class="lock-subtitle">Enter your password to unlock</p>
+            <div class="input-group">
+                <input type="password" 
+                       class="lock-input" 
+                       @bind="password" 
+                       @bind:event="oninput"
+                       @onkeydown="HandleKeyDown"
+                       placeholder="Password" />
+            </div>
+            <button class="lock-btn" @onclick="Unlock" disabled="@string.IsNullOrEmpty(password)">
+                Unlock
+            </button>
+        }
 
-    @if (!isPasswordSet)
-    {
-        <p>Set your app password:</p>
-        <input type="password" class="form-control" @bind="password" placeholder="New password" />
-        <button class="action-btn primary" @onclick="SetPassword">Set Password</button>
-    }
-    else
-    {
-        <p>Enter your password to unlock:</p>
-        <input type="password" class="form-control" @bind="password" placeholder="Password" />
-        <button class="action-btn primary" @onclick="Unlock">Unlock</button>
-    }
-
-    @if (!string.IsNullOrEmpty(error))
-    {
-        <p class="error-message">@error</p>
-    }
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <p class="error-text">@error</p>
+        }
+    </div>
 </div>
 
 @code {
-    string password = "";
-    string error = "";
-    bool isPasswordSet;
+    private string password = "";
+    private string confirmPassword = "";
+    private string error = "";
+    private bool isPasswordSet;
 
     protected override void OnInitialized()
     {
-        isPasswordSet = AuthService.IsPasswordSet(); // Fixed: removed negation
+        isPasswordSet = AuthService.IsPasswordSet();
+        
+        // If already unlocked, redirect to dashboard
+        if (AppState.IsUnlocked)
+        {
+            Nav.NavigateTo("/dashboard");
+        }
     }
 
-    void SetPassword()
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            Unlock();
+        }
+    }
+
+    private void SetPassword()
     {
         if (string.IsNullOrWhiteSpace(password))
         {
-            error = "Password cannot be empty!";
+            error = "Password cannot be empty";
+            return;
+        }
+
+        if (password.Length < 4)
+        {
+            error = "Password must be at least 4 characters";
+            return;
+        }
+
+        if (password != confirmPassword)
+        {
+            error = "Passwords do not match";
             return;
         }
 
         AuthService.SetPassword(password);
         isPasswordSet = true;
         password = "";
+        confirmPassword = "";
         error = "";
     }
 
-    void Unlock()
+    private void Unlock()
     {
         if (AuthService.VerifyPassword(password))
         {
-            Nav.NavigateTo("/dashboard"); // Navigate to main page
+            AppState.Unlock();
+            Nav.NavigateTo("/dashboard");
         }
         else
         {
-            error = "Wrong password!";
+            error = "Incorrect password";
+            password = "";
         }
     }
 }

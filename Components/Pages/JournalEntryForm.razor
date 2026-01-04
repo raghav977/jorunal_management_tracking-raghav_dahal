@@ -3,99 +3,269 @@
 @using MauiApp3.Models
 @using MauiApp3.Services
 @inject IJournalService JournalService
+@inject ITagService TagService
+@inject IStreakService StreakService
 @inject NavigationManager Nav
 
 <div class="entry-form-page">
-    <h1>@(isEditMode ? "✏️ Edit Entry" : "✍️ New Entry")</h1>
+    <h1>@(isEdit ? "Edit Entry" : "New Entry")</h1>
 
-    <EditForm Model="entry" OnValidSubmit="SaveEntry">
-        <DataAnnotationsValidator />
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="error-banner">@error</div>
+    }
 
-        <div class="form-group">
-            <label for="title">Title</label>
-            <InputText id="title" class="form-control" @bind-Value="entry.Title" placeholder="What's on your mind?" />
-            <ValidationMessage For="@(() => entry.Title)" />
+    <div class="form-group">
+        <label>Date</label>
+        <input type="date" class="form-control" @bind="entryDate" disabled="@isEdit" />
+        @if (dateError != null)
+        {
+            <span class="field-error">@dateError</span>
+        }
+    </div>
+
+    <div class="form-group">
+        <label>Title</label>
+        <input type="text" class="form-control" @bind="title" placeholder="What's on your mind?" />
+    </div>
+
+    <div class="form-group">
+        <label>Content</label>
+        <div class="rich-text-toolbar">
+            <button type="button" class="toolbar-btn" @onclick="InsertBold" title="Bold">B</button>
+            <button type="button" class="toolbar-btn italic" @onclick="InsertItalic" title="Italic">I</button>
+            <button type="button" class="toolbar-btn" @onclick="InsertHeading" title="Heading">#</button>
+            <button type="button" class="toolbar-btn" @onclick="InsertList" title="List">•</button>
+            <button type="button" class="toolbar-btn" @onclick="InsertLink" title="Link">🔗</button>
         </div>
+        <textarea class="form-control content-area" @bind="content" placeholder="Write your thoughts... (Supports Markdown)"></textarea>
+        <span class="word-count">@wordCount words</span>
+    </div>
 
-        <div class="form-group">
-            <label>How are you feeling?</label>
-            <div class="mood-selector">
-                @foreach (var mood in Enum.GetValues<MoodType>())
+    <div class="form-group">
+        <label>Primary Mood (required)</label>
+        <div class="mood-selector">
+            @foreach (var mood in Enum.GetValues<MoodType>())
+            {
+                <button type="button" 
+                        class="mood-btn @(primaryMood == mood ? "selected" : "")"
+                        @onclick="() => SelectPrimaryMood(mood)">
+                    <span class="mood-emoji">@GetMoodEmoji(mood)</span>
+                    <span class="mood-name">@mood</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Secondary Moods (optional, up to 2)</label>
+        <div class="mood-selector secondary">
+            @foreach (var mood in Enum.GetValues<MoodType>())
+            {
+                @if (mood != primaryMood)
                 {
                     <button type="button" 
-                            class="mood-btn @(entry.Mood == mood ? "selected" : "")" 
-                            @onclick="() => SelectMood(mood)">
+                            class="mood-btn small @(IsSecondaryMoodSelected(mood) ? "selected" : "")"
+                            @onclick="() => ToggleSecondaryMood(mood)">
                         <span class="mood-emoji">@GetMoodEmoji(mood)</span>
                         <span class="mood-name">@mood</span>
                     </button>
                 }
-            </div>
+            }
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="content">Your thoughts</label>
-            <InputTextArea id="content" class="form-control content-area" @bind-Value="entry.Content" 
-                           placeholder="Write about your day, feelings, or anything you'd like to remember..." rows="8" />
-            <ValidationMessage For="@(() => entry.Content)" />
+    <div class="form-group">
+        <label>Tags</label>
+        <div class="tag-selector">
+            @foreach (var tag in availableTags)
+            {
+                <button type="button" 
+                        class="tag-btn @(selectedTagIds.Contains(tag.Id) ? "selected" : "")"
+                        @onclick="() => ToggleTag(tag.Id)">
+                    @tag.Name
+                </button>
+            }
         </div>
+        <div class="add-tag-row">
+            <input type="text" class="form-control small" @bind="newTagName" placeholder="New tag name" />
+            <button type="button" class="btn-secondary btn-sm" @onclick="CreateNewTag">Add Tag</button>
+        </div>
+    </div>
 
-        <div class="form-actions">
-            <button type="button" class="action-btn secondary" @onclick="Cancel">Cancel</button>
-            <button type="submit" class="action-btn primary" disabled="@isSaving">
-                @(isSaving ? "Saving..." : "Save Entry")
-            </button>
-        </div>
-    </EditForm>
+    <div class="form-actions">
+        <button class="btn-secondary" @onclick="Cancel">Cancel</button>
+        <button class="btn-primary" @onclick="Save" disabled="@isSaving">
+            @(isSaving ? "Saving..." : "Save Entry")
+        </button>
+    </div>
 </div>
 
 @code {
-    [Parameter]
-    public int? Id { get; set; }
+    [Parameter] public int Id { get; set; }
+    [SupplyParameterFromQuery(Name = "date")] public string? DateParam { get; set; }
 
-    private JournalEntry entry = new();
-    private bool isEditMode => Id.HasValue;
-    private bool isSaving;
+    private bool isEdit => Id > 0;
+    private string title = "";
+    private string content = "";
+    private DateOnly entryDate = DateOnly.FromDateTime(DateTime.Now);
+    private MoodType primaryMood = MoodType.Neutral;
+    private MoodType? secondaryMood1;
+    private MoodType? secondaryMood2;
+    private List<Tag> availableTags = new();
+    private List<int> selectedTagIds = new();
+    private string newTagName = "";
+    private string error = "";
+    private string? dateError;
+    private bool isSaving = false;
+
+    private int wordCount => string.IsNullOrWhiteSpace(content) 
+        ? 0 
+        : content.Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
 
     protected override async Task OnInitializedAsync()
     {
-        if (isEditMode)
+        availableTags = await TagService.GetAllTagsAsync();
+
+        if (isEdit)
         {
-            var existingEntry = await JournalService.GetEntryByIdAsync(Id!.Value);
-            if (existingEntry != null)
+            var entry = await JournalService.GetEntryByIdAsync(Id);
+            if (entry != null)
             {
-                entry = existingEntry;
+                title = entry.Title;
+                content = entry.Content;
+                entryDate = entry.EntryDate;
+                primaryMood = entry.Mood;
+                secondaryMood1 = entry.SecondaryMood1;
+                secondaryMood2 = entry.SecondaryMood2;
+                selectedTagIds = entry.JournalEntryTags?.Select(jt => jt.TagId).ToList() ?? new();
             }
-            else
-            {
-                Nav.NavigateTo("/journal");
-            }
+        }
+        else if (!string.IsNullOrEmpty(DateParam) && DateOnly.TryParse(DateParam, out var parsedDate))
+        {
+            entryDate = parsedDate;
         }
     }
 
-    private void SelectMood(MoodType mood)
+    private void SelectPrimaryMood(MoodType mood)
     {
-        entry.Mood = mood;
+        primaryMood = mood;
+        // Remove from secondary if it was selected
+        if (secondaryMood1 == mood) secondaryMood1 = null;
+        if (secondaryMood2 == mood) secondaryMood2 = null;
     }
 
-    private async Task SaveEntry()
+    private bool IsSecondaryMoodSelected(MoodType mood)
     {
-        if (string.IsNullOrWhiteSpace(entry.Title))
+        return secondaryMood1 == mood || secondaryMood2 == mood;
+    }
+
+    private void ToggleSecondaryMood(MoodType mood)
+    {
+        if (secondaryMood1 == mood)
         {
-            entry.Title = "Untitled Entry";
+            secondaryMood1 = null;
+        }
+        else if (secondaryMood2 == mood)
+        {
+            secondaryMood2 = null;
+        }
+        else if (secondaryMood1 == null)
+        {
+            secondaryMood1 = mood;
+        }
+        else if (secondaryMood2 == null)
+        {
+            secondaryMood2 = mood;
+        }
+        // Max 2 secondary moods reached, do nothing
+    }
+
+    private void ToggleTag(int tagId)
+    {
+        if (selectedTagIds.Contains(tagId))
+            selectedTagIds.Remove(tagId);
+        else
+            selectedTagIds.Add(tagId);
+    }
+
+    private async Task CreateNewTag()
+    {
+        if (string.IsNullOrWhiteSpace(newTagName)) return;
+
+        var tag = await TagService.CreateTagAsync(new Tag { Name = newTagName.Trim() });
+        availableTags.Add(tag);
+        selectedTagIds.Add(tag.Id);
+        newTagName = "";
+    }
+
+    private void InsertBold() => content += "**text**";
+    private void InsertItalic() => content += "*text*";
+    private void InsertHeading() => content += "\n# Heading";
+    private void InsertList() => content += "\n- Item";
+    private void InsertLink() => content += "[text](url)";
+
+    private async Task Save()
+    {
+        error = "";
+        dateError = null;
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            error = "Please enter a title";
+            return;
+        }
+
+        // Check one entry per day (only for new entries)
+        if (!isEdit)
+        {
+            var existingEntry = await JournalService.GetEntryByDateAsync(entryDate);
+            if (existingEntry != null)
+            {
+                dateError = $"An entry already exists for {entryDate:MMM dd, yyyy}. Edit that entry instead.";
+                return;
+            }
         }
 
         isSaving = true;
-
-        if (isEditMode)
+        try
         {
-            await JournalService.UpdateEntryAsync(entry);
-        }
-        else
-        {
-            await JournalService.CreateEntryAsync(entry);
-        }
+            var entry = new JournalEntry
+            {
+                Id = Id,
+                Title = title,
+                Content = content,
+                EntryDate = entryDate,
+                Mood = primaryMood,
+                SecondaryMood1 = secondaryMood1,
+                SecondaryMood2 = secondaryMood2
+            };
 
-        Nav.NavigateTo("/journal");
+            if (isEdit)
+            {
+                await JournalService.UpdateEntryAsync(entry);
+            }
+            else
+            {
+                entry = await JournalService.CreateEntryAsync(entry);
+            }
+
+            // Update tags
+            await TagService.SetEntryTagsAsync(entry.Id, selectedTagIds);
+
+            // Update streak
+            await StreakService.UpdateStreakAsync();
+
+            Nav.NavigateTo($"/journal/{entry.Id}");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 
     private void Cancel() => Nav.NavigateTo("/journal");

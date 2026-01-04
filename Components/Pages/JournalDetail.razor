@@ -12,10 +12,10 @@
     else
     {
         <div class="detail-header">
-            <button class="back-btn" @onclick="GoBack">← Back</button>
+            <button class="btn-secondary" @onclick="GoBack">← Back</button>
             <div class="detail-actions">
-                <button class="action-btn secondary" @onclick="EditEntry">✏️ Edit</button>
-                <button class="action-btn danger" @onclick="DeleteEntry">🗑️ Delete</button>
+                <button class="btn-secondary" @onclick="EditEntry">✏️ Edit</button>
+                <button class="btn-danger" @onclick="DeleteEntry">🗑️ Delete</button>
             </div>
         </div>
 
@@ -23,23 +23,41 @@
             <div class="detail-mood">
                 <span class="mood-large">@GetMoodEmoji(entry.Mood)</span>
                 <span class="mood-label">@entry.Mood</span>
+                @if (entry.SecondaryMood1.HasValue)
+                {
+                    <span class="mood-secondary">@GetMoodEmoji(entry.SecondaryMood1.Value)</span>
+                }
+                @if (entry.SecondaryMood2.HasValue)
+                {
+                    <span class="mood-secondary">@GetMoodEmoji(entry.SecondaryMood2.Value)</span>
+                }
             </div>
 
             <h1 class="detail-title">@entry.Title</h1>
 
             <div class="detail-meta">
-                <span>📅 @entry.CreatedAt.ToLocalTime().ToString("MMMM dd, yyyy")</span>
-                <span>🕐 @entry.CreatedAt.ToLocalTime().ToString("h:mm tt")</span>
+                <span>📅 @entry.EntryDate.ToString("MMMM dd, yyyy")</span>
+                <span>📝 @entry.WordCount words</span>
                 @if (entry.UpdatedAt != entry.CreatedAt)
                 {
                     <span>✏️ Edited @entry.UpdatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
                 }
             </div>
 
+            @if (entry.JournalEntryTags?.Any() == true)
+            {
+                <div class="detail-tags">
+                    @foreach (var jt in entry.JournalEntryTags)
+                    {
+                        <span class="tag-badge">@jt.Tag?.Name</span>
+                    }
+                </div>
+            }
+
             <div class="detail-content">
                 @foreach (var paragraph in entry.Content.Split('\n', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    <p>@paragraph</p>
+                    <p>@RenderMarkdown(paragraph)</p>
                 }
             </div>
         </div>
@@ -68,6 +86,15 @@
     {
         await JournalService.DeleteEntryAsync(Id);
         Nav.NavigateTo("/journal");
+    }
+
+    private MarkupString RenderMarkdown(string text)
+    {
+        // Simple markdown rendering
+        var html = text
+            .Replace("**", "<strong>").Replace("**", "</strong>")
+            .Replace("*", "<em>").Replace("*", "</em>");
+        return new MarkupString(html);
     }
 
     private string GetMoodEmoji(MoodType mood) => mood switch

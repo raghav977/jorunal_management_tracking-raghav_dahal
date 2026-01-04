@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-
 using System.Security.Cryptography;
 using System.Text;
 using MauiApp3.Data;
@@ -15,21 +12,29 @@ public class AuthService
     public AuthService(AppDbContext dbContext)
     {
         _dbContext = dbContext;
-        _dbContext.Database.EnsureCreated();
+        _dbContext.InitializeDatabase();
     }
 
     public bool VerifyPassword(string password)
     {
-        var userSecurity = _dbContext.UserSecurities.FirstOrDefault();
-        if (userSecurity == null)
+        try
+        {
+            var userSecurity = _dbContext.UserSecurities.FirstOrDefault();
+            if (userSecurity == null)
+            {
+                return false;
+            }
+            var hashedInputBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+            var hashedInputString = Convert.ToHexStringLower(hashedInputBytes);
+
+            return hashedInputString == userSecurity.PasswordHash;
+        }
+        catch
         {
             return false;
         }
-        var hashedInputBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        var hashedInputString = Convert.ToHexStringLower(hashedInputBytes);
-
-        return hashedInputString == userSecurity.PasswordHash;
     }
+
     public void SetPassword(string password)
     {
         var hashedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
@@ -54,8 +59,16 @@ public class AuthService
         }
         _dbContext.SaveChanges();
     }
+
     public bool IsPasswordSet()
     {
-        return _dbContext.UserSecurities.Any();
+        try
+        {
+            return _dbContext.UserSecurities.Any();
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

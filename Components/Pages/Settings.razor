@@ -1,0 +1,146 @@
+@page "/settings"
+@using MauiApp3.Models
+@using MauiApp3.Services
+@inject IThemeService ThemeService
+@inject AuthService AuthService
+@inject AppState AppState
+@inject NavigationManager Nav
+
+<div class="settings-page">
+    <h1>Settings</h1>
+
+    <div class="settings-section">
+        <h2>Theme</h2>
+        <div class="theme-options">
+            @foreach (var theme in availableThemes)
+            {
+                <button class="theme-btn @(currentTheme == theme ? "selected" : "")"
+                        @onclick="() => SetTheme(theme)">
+                    <span class="theme-preview @theme.ToLower()"></span>
+                    <span>@theme</span>
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="settings-section">
+        <h2>Security</h2>
+        <div class="security-options">
+            <button class="btn-secondary" @onclick="ToggleChangePassword">
+                Change Password
+            </button>
+        </div>
+
+        @if (showChangePassword)
+        {
+            <div class="change-password-form">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" class="form-control" @bind="currentPassword" />
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" class="form-control" @bind="newPassword" />
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" class="form-control" @bind="confirmPassword" />
+                </div>
+                @if (!string.IsNullOrEmpty(passwordError))
+                {
+                    <div class="error-text">@passwordError</div>
+                }
+                @if (!string.IsNullOrEmpty(passwordSuccess))
+                {
+                    <div class="success-text">@passwordSuccess</div>
+                }
+                <div class="form-actions">
+                    <button class="btn-secondary" @onclick="CancelChangePassword">Cancel</button>
+                    <button class="btn-primary" @onclick="ChangePassword">Save</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="settings-section">
+        <h2>About</h2>
+        <p class="about-text">Journal App v1.0</p>
+        <p class="about-text">A simple, secure journal application.</p>
+    </div>
+</div>
+
+@code {
+    private List<string> availableThemes = new();
+    private string currentTheme = "Light";
+    private bool showChangePassword = false;
+    private string currentPassword = "";
+    private string newPassword = "";
+    private string confirmPassword = "";
+    private string passwordError = "";
+    private string passwordSuccess = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        availableThemes = ThemeService.GetAvailableThemes();
+        var settings = await ThemeService.GetThemeAsync();
+        currentTheme = settings.ThemeName;
+    }
+
+    private async Task SetTheme(string theme)
+    {
+        currentTheme = theme;
+        await ThemeService.SetThemeAsync(theme);
+        // Update global state to apply theme immediately
+        AppState.SetTheme(theme);
+    }
+
+    private void ToggleChangePassword()
+    {
+        showChangePassword = !showChangePassword;
+        ClearPasswordFields();
+    }
+
+    private void CancelChangePassword()
+    {
+        showChangePassword = false;
+        ClearPasswordFields();
+    }
+
+    private void ClearPasswordFields()
+    {
+        currentPassword = "";
+        newPassword = "";
+        confirmPassword = "";
+        passwordError = "";
+        passwordSuccess = "";
+    }
+
+    private void ChangePassword()
+    {
+        passwordError = "";
+        passwordSuccess = "";
+
+        if (!AuthService.VerifyPassword(currentPassword))
+        {
+            passwordError = "Current password is incorrect";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 4)
+        {
+            passwordError = "New password must be at least 4 characters";
+            return;
+        }
+
+        if (newPassword != confirmPassword)
+        {
+            passwordError = "New passwords do not match";
+            return;
+        }
+
+        AuthService.SetPassword(newPassword);
+        passwordSuccess = "Password changed successfully";
+        ClearPasswordFields();
+        showChangePassword = false;
+    }
+}

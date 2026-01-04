@@ -1,88 +1,170 @@
 @page "/dashboard"
+@using MauiApp3.Models
 @using MauiApp3.Services
 @inject IJournalService JournalService
+@inject IStreakService StreakService
+@inject ITagService TagService
 @inject NavigationManager Nav
 
 <div class="dashboard">
-    <h1>📔 My Journal</h1>
+    <h1>Dashboard</h1>
     
-    <div class="stats-grid">
-        <div class="stat-card">
-            <span class="stat-number">@totalEntries</span>
-            <span class="stat-label">Total Entries</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-number">@todayEntries</span>
-            <span class="stat-label">Today</span>
-        </div>
-        <div class="stat-card mood-card">
-            <span class="stat-emoji">@GetMoodEmoji(mostFrequentMood)</span>
-            <span class="stat-label">Top Mood</span>
-        </div>
-    </div>
-
-    <div class="quick-actions">
-        <button class="action-btn primary" @onclick="NewEntry">
-            ✍️ New Entry
-        </button>
-        <button class="action-btn secondary" @onclick="ViewJournal">
-            📖 View Journal
-        </button>
-    </div>
-
-    @if (recentEntries.Any())
+    @if (isLoading)
     {
-        <div class="recent-section">
-            <h2>Recent Entries</h2>
-            @foreach (var entry in recentEntries)
-            {
-                <div class="entry-preview" @onclick="() => ViewEntry(entry.Id)">
-                    <span class="entry-mood">@GetMoodEmoji(entry.Mood)</span>
-                    <div class="entry-info">
-                        <strong>@entry.Title</strong>
-                        <span class="entry-date">@entry.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
-                    </div>
-                </div>
-            }
+        <div class="loading">Loading...</div>
+    }
+    else
+    {
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">@totalEntries</span>
+                <span class="stat-label">Total Entries</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">@currentStreak</span>
+                <span class="stat-label">Current Streak</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">@longestStreak</span>
+                <span class="stat-label">Longest Streak</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">@totalWordCount</span>
+                <span class="stat-label">Total Words</span>
+            </div>
         </div>
+
+        <div class="quick-actions">
+            @if (hasTodayEntry)
+            {
+                <button class="btn-primary" @onclick="EditTodayEntry">
+                    ✍️ Edit Today's Entry
+                </button>
+            }
+            else
+            {
+                <button class="btn-primary" @onclick="NewEntry">
+                    ✍️ New Entry
+                </button>
+            }
+            <button class="btn-secondary" @onclick="ViewJournal">
+                📖 View All
+            </button>
+        </div>
+
+        <div class="analytics-section">
+            <h2>Mood Distribution</h2>
+            <div class="mood-chart">
+                @foreach (var mood in moodDistribution.OrderByDescending(m => m.Value))
+                {
+                    @if (mood.Value > 0)
+                    {
+                        <div class="mood-bar-container">
+                            <span class="mood-label">@GetMoodEmoji(mood.Key) @mood.Key</span>
+                            <div class="mood-bar" style="width: @(GetMoodPercentage(mood.Value))%"></div>
+                            <span class="mood-count">@mood.Value</span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        @if (mostUsedTags.Any())
+        {
+            <div class="tags-section">
+                <h2>Most Used Tags</h2>
+                <div class="tag-list">
+                    @foreach (var tag in mostUsedTags)
+                    {
+                        <span class="tag-item">
+                            @tag.Tag.Name (@tag.Count)
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (recentEntries.Any())
+        {
+            <div class="recent-section">
+                <h2>Recent Entries</h2>
+                @foreach (var entry in recentEntries)
+                {
+                    <div class="entry-preview" @onclick="() => ViewEntry(entry.Id)">
+                        <span class="entry-mood">@GetMoodEmoji(entry.Mood)</span>
+                        <div class="entry-info">
+                            <strong>@entry.Title</strong>
+                            <span class="entry-date">@entry.EntryDate.ToString("MMM dd, yyyy")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     }
 </div>
 
 @code {
-    private List<MauiApp3.Models.JournalEntry> recentEntries = new();
+    private bool isLoading = true;
+    private List<JournalEntry> recentEntries = new();
     private int totalEntries;
-    private int todayEntries;
-    private MauiApp3.Models.MoodType mostFrequentMood = MauiApp3.Models.MoodType.Neutral;
+    private int currentStreak;
+    private int longestStreak;
+    private int totalWordCount;
+    private bool hasTodayEntry;
+    private int? todayEntryId;
+    private Dictionary<MoodType, int> moodDistribution = new();
+    private List<(Tag Tag, int Count)> mostUsedTags = new();
 
     protected override async Task OnInitializedAsync()
     {
-        var allEntries = await JournalService.GetAllEntriesAsync();
-        totalEntries = allEntries.Count;
-        todayEntries = allEntries.Count(e => e.CreatedAt.Date == DateTime.UtcNow.Date);
-        recentEntries = allEntries.Take(3).ToList();
-
-        if (allEntries.Any())
+        try
         {
-            mostFrequentMood = allEntries
-                .GroupBy(e => e.Mood)
-                .OrderByDescending(g => g.Count())
-                .First().Key;
+            var allEntries = await JournalService.GetAllEntriesAsync();
+            totalEntries = allEntries.Count;
+            recentEntries = allEntries.Take(5).ToList();
+            totalWordCount = await JournalService.GetTotalWordCountAsync();
+            
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            var todayEntry = await JournalService.GetEntryByDateAsync(today);
+            hasTodayEntry = todayEntry != null;
+            todayEntryId = todayEntry?.Id;
+
+            currentStreak = await StreakService.GetCurrentStreakAsync();
+            longestStreak = await StreakService.GetLongestStreakAsync();
+
+            moodDistribution = await JournalService.GetMoodDistributionAsync();
+            mostUsedTags = await TagService.GetMostUsedTagsAsync(5);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
     private void NewEntry() => Nav.NavigateTo("/journal/new");
+    private void EditTodayEntry() => Nav.NavigateTo($"/journal/edit/{todayEntryId}");
     private void ViewJournal() => Nav.NavigateTo("/journal");
     private void ViewEntry(int id) => Nav.NavigateTo($"/journal/{id}");
 
-    private string GetMoodEmoji(MauiApp3.Models.MoodType mood) => mood switch
+    private string GetMoodEmoji(MoodType mood) => mood switch
     {
-        MauiApp3.Models.MoodType.Happy => "😊",
-        MauiApp3.Models.MoodType.Sad => "😢",
-        MauiApp3.Models.MoodType.Neutral => "😐",
-        MauiApp3.Models.MoodType.Anxious => "😰",
-        MauiApp3.Models.MoodType.Excited => "🤩",
-        MauiApp3.Models.MoodType.Grateful => "🙏",
-        MauiApp3.Models.MoodType.Stressed => "😫",
+        MoodType.Happy => "😊",
+        MoodType.Sad => "😢",
+        MoodType.Neutral => "😐",
+        MoodType.Anxious => "😰",
+        MoodType.Excited => "🤩",
+        MoodType.Grateful => "🙏",
+        MoodType.Stressed => "😫",
         _ => "😐"
     };
+
+    private int GetMoodPercentage(int count)
+    {
+        var max = moodDistribution.Values.Max();
+        return max > 0 ? (int)((count / (double)max) * 100) : 0;
+    }
 }

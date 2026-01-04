@@ -1,0 +1,147 @@
+@page "/export"
+@using MauiApp3.Services
+@inject IExportService ExportService
+@inject IJournalService JournalService
+
+<div class="export-page">
+    <h1>Export Journal</h1>
+
+    <div class="export-section">
+        <h2>Select Date Range</h2>
+        
+        <div class="date-range-picker">
+            <div class="form-group">
+                <label>From</label>
+                <input type="date" class="form-control" @bind="startDate" />
+            </div>
+            <div class="form-group">
+                <label>To</label>
+                <input type="date" class="form-control" @bind="endDate" />
+            </div>
+        </div>
+
+        <div class="quick-ranges">
+            <button class="btn-secondary btn-sm" @onclick="SetLastWeek">Last Week</button>
+            <button class="btn-secondary btn-sm" @onclick="SetLastMonth">Last Month</button>
+            <button class="btn-secondary btn-sm" @onclick="SetLastYear">Last Year</button>
+            <button class="btn-secondary btn-sm" @onclick="SetAll">All Entries</button>
+        </div>
+
+        <div class="entry-preview-count">
+            @if (previewCount > 0)
+            {
+                <p>@previewCount entries will be exported</p>
+            }
+            else
+            {
+                <p>No entries in selected range</p>
+            }
+        </div>
+
+        <div class="export-actions">
+            <button class="btn-primary" @onclick="ExportToHtml" disabled="@(isExporting || previewCount == 0)">
+                @(isExporting ? "Exporting..." : "Export as HTML (Print to PDF)")
+            </button>
+            <button class="btn-secondary" @onclick="ExportToText" disabled="@(isExporting || previewCount == 0)">
+                Export as Text
+            </button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(exportResult))
+        {
+            <div class="export-result success">
+                <p>Export successful!</p>
+                <p class="file-path">Saved to: @exportResult</p>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="export-result error">
+                <p>@error</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private DateTime startDate = DateTime.Now.AddMonths(-1);
+    private DateTime endDate = DateTime.Now;
+    private int previewCount = 0;
+    private bool isExporting = false;
+    private string exportResult = "";
+    private string error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdatePreviewCount();
+    }
+
+    private async Task UpdatePreviewCount()
+    {
+        var start = DateOnly.FromDateTime(startDate);
+        var end = DateOnly.FromDateTime(endDate);
+        var entries = await JournalService.GetEntriesByDateRangeAsync(start, end);
+        previewCount = entries.Count;
+    }
+
+    private async Task SetLastWeek()
+    {
+        endDate = DateTime.Now;
+        startDate = DateTime.Now.AddDays(-7);
+        await UpdatePreviewCount();
+    }
+
+    private async Task SetLastMonth()
+    {
+        endDate = DateTime.Now;
+        startDate = DateTime.Now.AddMonths(-1);
+        await UpdatePreviewCount();
+    }
+
+    private async Task SetLastYear()
+    {
+        endDate = DateTime.Now;
+        startDate = DateTime.Now.AddYears(-1);
+        await UpdatePreviewCount();
+    }
+
+    private async Task SetAll()
+    {
+        startDate = new DateTime(2020, 1, 1);
+        endDate = DateTime.Now;
+        await UpdatePreviewCount();
+    }
+
+    private async Task ExportToHtml()
+    {
+        await DoExport(async (start, end) => await ExportService.ExportToPdfAsync(start, end));
+    }
+
+    private async Task ExportToText()
+    {
+        await DoExport(async (start, end) => await ExportService.ExportToTextAsync(start, end));
+    }
+
+    private async Task DoExport(Func<DateOnly, DateOnly, Task<string>> exportFunc)
+    {
+        error = "";
+        exportResult = "";
+        isExporting = true;
+
+        try
+        {
+            var start = DateOnly.FromDateTime(startDate);
+            var end = DateOnly.FromDateTime(endDate);
+            exportResult = await exportFunc(start, end);
+        }
+        catch (Exception ex)
+        {
+            error = $"Export failed: {ex.Message}";
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+}
