@@ -6,6 +6,8 @@
 @inject ITagService TagService
 @inject IStreakService StreakService
 @inject NavigationManager Nav
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
 <div class="entry-form-page">
     <h1>@(isEdit ? "Edit Entry" : "New Entry")</h1>
@@ -31,14 +33,7 @@
 
     <div class="form-group">
         <label>Content</label>
-        <div class="rich-text-toolbar">
-            <button type="button" class="toolbar-btn" @onclick="InsertBold" title="Bold">B</button>
-            <button type="button" class="toolbar-btn italic" @onclick="InsertItalic" title="Italic">I</button>
-            <button type="button" class="toolbar-btn" @onclick="InsertHeading" title="Heading">#</button>
-            <button type="button" class="toolbar-btn" @onclick="InsertList" title="List">•</button>
-            <button type="button" class="toolbar-btn" @onclick="InsertLink" title="Link">🔗</button>
-        </div>
-        <textarea class="form-control content-area" @bind="content" placeholder="Write your thoughts... (Supports Markdown)"></textarea>
+        <div id="quill-editor" class="quill-container"></div>
         <span class="word-count">@wordCount words</span>
     </div>
 
@@ -118,10 +113,12 @@
     private string error = "";
     private string? dateError;
     private bool isSaving = false;
+    private bool quillInitialized = false;
+    private string quillText = "";
 
-    private int wordCount => string.IsNullOrWhiteSpace(content) 
+    private int wordCount => string.IsNullOrWhiteSpace(quillText) 
         ? 0 
-        : content.Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+        : quillText.Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
 
     protected override async Task OnInitializedAsync()
     {
@@ -145,6 +142,21 @@
         {
             entryDate = parsedDate;
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !quillInitialized)
+        {
+            quillInitialized = true;
+            await JSRuntime.InvokeVoidAsync("QuillInterop.init", "quill-editor", content);
+        }
+    }
+
+    private async Task UpdateWordCount()
+    {
+        quillText = await JSRuntime.InvokeAsync<string>("QuillInterop.getText");
+        StateHasChanged();
     }
 
     private void SelectPrimaryMood(MoodType mood)
@@ -199,16 +211,15 @@
         newTagName = "";
     }
 
-    private void InsertBold() => content += "**text**";
-    private void InsertItalic() => content += "*text*";
-    private void InsertHeading() => content += "\n# Heading";
-    private void InsertList() => content += "\n- Item";
-    private void InsertLink() => content += "[text](url)";
+    // Formatting is now handled by Quill's built-in toolbar
 
     private async Task Save()
     {
         error = "";
         dateError = null;
+
+        // Get content from Quill editor
+        content = await JSRuntime.InvokeAsync<string>("QuillInterop.getContent");
 
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -281,4 +292,16 @@
         MoodType.Stressed => "😫",
         _ => "😐"
     };
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("QuillInterop.destroy");
+        }
+        catch
+        {
+            // Ignore errors during disposal
+        }
+    }
 }

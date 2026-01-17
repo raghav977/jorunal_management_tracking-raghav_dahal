@@ -62,11 +62,15 @@
 		</data>
 		<key>Resources/wwwroot/app.css</key>
 		<data>
-		CSuIlw5c3npeCLhH+x9K0TMqMiQ=
+		gfD6VC+ifD2ZsL9cDjSNRwLJhx0=
 		</data>
 		<key>Resources/wwwroot/index.html</key>
 		<data>
-		EAWU8JFwnzVAlm16DoQVVlSzl9g=
+		DfzVJytpAPI2cmJi0I3PW3D/zaQ=
+		</data>
+		<key>Resources/wwwroot/js/quill-interop.js</key>
+		<data>
+		mRuC/BIuzf3hQ+o2Wob4rIs73eo=
 		</data>
 		<key>Resources/wwwroot/lib/bootstrap/dist/css/bootstrap.min.css</key>
 		<data>
@@ -83,14 +87,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			25V3ozhuxdL9MVC3gILDmhC20DXrhKml5i0x4Y84aTw=
+			T3IkH8p7TbmN/0bG/4BpnZbj3quswYhoz0/4/LUEaQY=
 			</data>
 		</dict>
 		<key>MonoBundle/MauiApp3.pdb</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZLPsnnNnm5qH5iAq1QBLySLhztZ7WWTlSI/R27PheYU=
+			fDZOvOBDs9iEA9FxPWFoegRVsUE9GRaTIcS3jWOG0uQ=
 			</data>
 		</dict>
 		<key>MonoBundle/Microsoft.AspNetCore.Authorization.dll</key>
@@ -1994,14 +1998,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			TzBJROWxk4UbjrJJvyh5bd9ZKu8V2zk1bAF+Nnz2u3M=
+			q8SMxKmA2egUWI7viZ4ph+5KbWFNGqeoyRgrdl7l5AE=
 			</data>
 		</dict>
 		<key>Resources/wwwroot/index.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			DBC4JBaZWup7kzbus4fOW0YeCp3ncVwja6UReRt3zLk=
+			Mu2kO7A6qPmA+QgrQpWmM9z+QvJSKcAHEec5Eqj4ZGU=
+			</data>
+		</dict>
+		<key>Resources/wwwroot/js/quill-interop.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			8/aFTJGZ4giDT9ehWO5W6haZLVp+cfBr/9V/TGYkJ2A=
 			</data>
 		</dict>
 		<key>Resources/wwwroot/lib/bootstrap/dist/css/bootstrap.min.css</key>

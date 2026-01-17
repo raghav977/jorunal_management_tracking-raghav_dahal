@@ -21,6 +21,10 @@
       "PackagePath": "staticwebassets/index.html"
     },
     {
+      "Id": "/Users/raghavdahal/Documents/dotnet/MauiApp3/wwwroot/js/quill-interop.js",
+      "PackagePath": "staticwebassets/js/quill-interop.js"
+    },
+    {
       "Id": "/Users/raghavdahal/Documents/dotnet/MauiApp3/wwwroot/lib/bootstrap/dist/css/bootstrap.min.css",
       "PackagePath": "staticwebassets/lib/bootstrap/dist/css/bootstrap.min.css"
     },

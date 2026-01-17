@@ -55,10 +55,7 @@
             }
 
             <div class="detail-content">
-                @foreach (var paragraph in entry.Content.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    <p>@RenderMarkdown(paragraph)</p>
-                }
+                @((MarkupString)entry.Content)
             </div>
         </div>
     }
@@ -86,15 +83,6 @@
     {
         await JournalService.DeleteEntryAsync(Id);
         Nav.NavigateTo("/journal");
-    }
-
-    private MarkupString RenderMarkdown(string text)
-    {
-        // Simple markdown rendering
-        var html = text
-            .Replace("**", "<strong>").Replace("**", "</strong>")
-            .Replace("*", "<em>").Replace("*", "</em>");
-        return new MarkupString(html);
     }
 
     private string GetMoodEmoji(MoodType mood) => mood switch

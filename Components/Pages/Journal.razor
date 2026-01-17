@@ -1,6 +1,7 @@
 @page "/journal"
 @using MauiApp3.Models
 @using MauiApp3.Services
+@using System.Text.RegularExpressions
 @inject IJournalService JournalService
 @inject ITagService TagService
 @inject NavigationManager Nav
@@ -204,7 +205,10 @@
 
     private string TruncateContent(string content)
     {
-        return content.Length > 100 ? content[..100] + "..." : content;
+        // Strip HTML tags for preview
+        var plainText = Regex.Replace(content, "<[^>]*>", " ");
+        plainText = Regex.Replace(plainText, @"\s+", " ").Trim();
+        return plainText.Length > 100 ? plainText[..100] + "..." : plainText;
     }
 
     private string GetMoodEmoji(MoodType mood) => mood switch
