@@ -139,7 +139,7 @@ public class JournalService : IJournalService
 
     // Pagination
     public async Task<(List<JournalEntry> Entries, int TotalCount)> GetEntriesPagedAsync(
-        int page, int pageSize, MoodType? moodFilter = null, int? tagId = null, string? searchTerm = null)
+        int page, int pageSize, MoodType? moodFilter = null, int? tagId = null, string? searchTerm = null, DateOnly? startDate = null, DateOnly? endDate = null)
     {
         var query = _dbContext.JournalEntries
             .Include(e => e.JournalEntryTags)
@@ -164,6 +164,17 @@ public class JournalService : IJournalService
             var lowerTerm = searchTerm.ToLower();
             query = query.Where(e => e.Title.ToLower().Contains(lowerTerm) || 
                                       e.Content.ToLower().Contains(lowerTerm));
+        }
+
+        // Date range filter
+        if (startDate.HasValue)
+        {
+            query = query.Where(e => e.EntryDate >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            query = query.Where(e => e.EntryDate <= endDate.Value);
         }
 
         var totalCount = await query.CountAsync();

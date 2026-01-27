@@ -499,6 +499,29 @@ main {
     align-items: center;
 }
 
+.date-filter-bar {
+    margin-bottom: 1.5rem;
+}
+
+.date-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.date-input {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--text-primary);
+}
+
 .entries-list {
     display: flex;
     flex-direction: column;

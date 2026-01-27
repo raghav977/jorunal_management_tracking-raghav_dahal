@@ -43,6 +43,23 @@
         }
     </div>
 
+    <div class="filter-bar date-filter-bar">
+        <label class="date-label">From:</label>
+        <input type="date" 
+               class="date-input" 
+               value="@startDateString"
+               @onchange="OnStartDateChanged" />
+        <label class="date-label">To:</label>
+        <input type="date" 
+               class="date-input" 
+               value="@endDateString"
+               @onchange="OnEndDateChanged" />
+        @if (startDate.HasValue || endDate.HasValue)
+        {
+            <button class="btn-secondary btn-sm" @onclick="ClearDateFilter">Clear Dates</button>
+        }
+    </div>
+
     @if (isLoading)
     {
         <div class="loading">Loading entries...</div>
@@ -111,8 +128,13 @@
     private int pageSize = 2;
     private int totalPages = 1;
     private int totalCount = 0;
+    private DateOnly? startDate;
+    private DateOnly? endDate;
 
-    private bool hasFilters => selectedMood.HasValue || selectedTagId.HasValue || !string.IsNullOrWhiteSpace(searchTerm);
+    private string startDateString => startDate?.ToString("yyyy-MM-dd") ?? "";
+    private string endDateString => endDate?.ToString("yyyy-MM-dd") ?? "";
+
+    private bool hasFilters => selectedMood.HasValue || selectedTagId.HasValue || !string.IsNullOrWhiteSpace(searchTerm) || startDate.HasValue || endDate.HasValue;
 
     protected override async Task OnInitializedAsync()
     {
@@ -128,7 +150,9 @@
             pageSize, 
             selectedMood, 
             selectedTagId, 
-            string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm);
+            string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm,
+            startDate,
+            endDate);
         
         entries = result.Entries;
         totalCount = result.TotalCount;
@@ -166,11 +190,37 @@
         await LoadEntries();
     }
 
+    private async Task OnStartDateChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        startDate = string.IsNullOrEmpty(value) ? null : DateOnly.Parse(value);
+        currentPage = 1;
+        await LoadEntries();
+    }
+
+    private async Task OnEndDateChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        endDate = string.IsNullOrEmpty(value) ? null : DateOnly.Parse(value);
+        currentPage = 1;
+        await LoadEntries();
+    }
+
+    private async Task ClearDateFilter()
+    {
+        startDate = null;
+        endDate = null;
+        currentPage = 1;
+        await LoadEntries();
+    }
+
     private async Task ClearFilters()
     {
         searchTerm = "";
         selectedMood = null;
         selectedTagId = null;
+        startDate = null;
+        endDate = null;
         currentPage = 1;
         await LoadEntries();
     }

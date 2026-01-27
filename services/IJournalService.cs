@@ -24,7 +24,7 @@ public interface IJournalService
     Task<List<JournalEntry>> SearchEntriesAsync(string searchTerm);
     
     // Pagination
-    Task<(List<JournalEntry> Entries, int TotalCount)> GetEntriesPagedAsync(int page, int pageSize, MoodType? moodFilter = null, int? tagId = null, string? searchTerm = null);
+    Task<(List<JournalEntry> Entries, int TotalCount)> GetEntriesPagedAsync(int page, int pageSize, MoodType? moodFilter = null, int? tagId = null, string? searchTerm = null, DateOnly? startDate = null, DateOnly? endDate = null);
     
     // Analytics
     Task<Dictionary<MoodType, int>> GetMoodDistributionAsync();
